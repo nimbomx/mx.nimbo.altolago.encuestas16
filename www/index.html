@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="msapplication-tap-highlight" content="no" />
+  <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+  <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+  <link rel="stylesheet" type="text/css" href="css/app.css" />
+  <title>Hello World</title>
+</head>
+<body>
+ <div id="app">
+  <div class="page splash">
+    <table>
+      <tr>
+        <td>
+          <img src="img/LogoAltoLagoBig.png"><br><br>
+          <div class="status"></div>
+          <button class="simpleBtn registrarBtn">REGISTRAR</button>
+          <button class="simpleBtn resetBtn">RESTAURAR</button>
+          <button class="simpleBtn reloadBtn">REINTENTAR</button>
+          <br><br>
+          <div id="encuestas"></div>
+          <div id="console">
+
+          </div>
+         <!-- <div id="lastSync"></div>
+          <button id="hardresetBtn">HARD reset</button>
+          <button id="resetBtn">reset</button>  <button id="reloadBtn">reload</button>-->
+          <button class="simpleBtn uploadBtn">SUBIR RESULTADOS</button>
+        </td>
+      </tr>
+    </table>
+    <button id="syncBtnmmm" style="display:none;">SYNC</button>
+  </div>
+
+</div>
+
+
+
+</div>
+<script type="text/javascript" src="cordova.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/index.min.js"></script>
+<script type="text/javascript">
+ // var urlService='http://187.216.52.244:8080/encuestas/public_html/';
+ var urlService='http://192.168.15.5/encuestas.altolago/public_html/';
+ var date;
+ var db = openDatabase('mydb', '1.0', 'ALTOLAGO DB', 2 * 1024 * 1024);
+ $(function(){
+
+
+  if (localStorage.getItem("syncDate") === null) {
+    date="2015-10-10 00:00:00";
+  }else{
+    date=localStorage.getItem("syncDate")
+  }
+  $('#lastSync').text(date);
+  document.addEventListener('deviceready', onDeviceReady, false);
+  $('#resetBtn').on('click',function(){
+    localStorage.removeItem("syncDate");
+    location.reload();
+  });
+  $('#hardresetBtn').on('click',function(){
+    localStorage.removeItem("syncDate");
+    localStorage.removeItem("deviceID");
+    localStorage.removeItem("deviceName");
+    location.reload();
+  });
+  $('#reloadBtn').on('click',function(){
+    location.reload();
+  });
+})
+ function onDeviceReady(){
+  function onPrompt(results) {
+    if(results.input1.trim()!=""){
+      localStorage.setItem("deviceName",results.input1);
+
+      $.post(urlService+"register",{
+        name:results.input1,
+        model:device.model,
+        plataform:device.platform,
+        uuid:device.uuid,
+        version:device.version
+      },function(e){
+        localStorage.setItem("deviceID",e);
+        location.reload();
+      });
+    }else{
+      registerDevice();
+    }
+    
+  }
+  function registerDevice(){
+    navigator.notification.prompt(
+        'Agrega un nombre al dispositivo',  // message
+        onPrompt,                  // callback to invoke
+        'Registro de dispositivo',            // title
+        ['Registrar']               // defaultText
+        );
+  }
+  if (localStorage.getItem("deviceID") === null) {
+
+    registerDevice();
+  }
+  $.post(urlService+"syncsurveys",{date:date},function(e){
+    if(e.synced=='false'){
+
+      localStorage.setItem("syncDate",e.sync.synced_at);
+                   // navigator.notification.alert(e.surveys);
+                   db.transaction(function (tx) {  
+                    tx.executeSql('DROP TABLE if exists Surveys');
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS Surveys (id unique, name, description,active)');
+                  });
+                   db.transaction(function (tx) {  
+                    for(n in e.surveys){
+                      tx.executeSql('INSERT INTO Surveys (id, name,description,active) VALUES (?,?,?,?)',[e.surveys[n].id,e.surveys[n].name,e.surveys[n].description,e.surveys[n].active]);
+                    }
+                  });
+                   db.transaction(function (tx) { 
+                    tx.executeSql('DROP TABLE if exists Structure');
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS Structure (id unique, id_survey,id_kind,val)');
+                  });
+                   db.transaction(function (tx) {  
+                    for(m in e.survey_structure){
+                      tx.executeSql('INSERT INTO Structure (id, id_survey,id_kind,val) VALUES (?,?,?,?)',[e.survey_structure[m].id,e.survey_structure[m].id_survey,e.survey_structure[m].id_kind,e.survey_structure[m].values]);
+
+                    }
+                  });
+
+
+
+                 }
+                 db.transaction(function (tx) {
+                  tx.executeSql('SELECT * FROM Surveys WHERE active=1', [], function (tx, results) {
+                   var len = results.rows.length, i;
+                   $('#encuestas').html('');
+                   for (i = 0; i < len; i++){
+                     $('#encuestas').append('<a href="encuesta.html#'+results.rows.item(i).id+'"><button class="txtBtn"><div class="shadow"></div><div class="active"><table><tr><td>'+results.rows.item(i).name+'</td></tr></table></div></button></a>');
+                   }
+                   animateTxtBtn();
+                 });
+                });
+
+               // navigator.notification.alert(e.survey_structure);
+             },'json');
+}
+
+function animateTxtBtn(){
+  $('.txtBtn').delay(500).each(function(i) {
+    $(this).addClass("undone").delay(200*i).queue(function(){
+      $(this).addClass("show").dequeue().delay(1000).queue(function(){
+        $(this).addClass("done").dequeue();
+      });
+    });
+  });
+}
+</script>
+</body>
+</html>
