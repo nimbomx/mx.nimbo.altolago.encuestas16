@@ -237,7 +237,7 @@ function updateOne(question,apply,surv,rlen,alen,qlen){
 			id_device:localStorage.getItem("deviceID"),
 			apply:alen,
 			device:localStorage.getItem("deviceName"),
-			question:""+qlen,
+			question:""+(qlen-1),
 			answer:""+question
 		},function(e){
 			storedResults[rlen-1][alen-1]=apply;
@@ -317,7 +317,7 @@ if(storedResults.length>0){
 
 }
 function updateResultsNow(){
-alert(JSON.stringify(results));
+//alert(JSON.stringify(results));
 	if(navigator.connection.type=='wifi'){
 		updateOneSurvey();
 	}
