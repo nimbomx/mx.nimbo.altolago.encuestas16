@@ -26,9 +26,9 @@
           <div id="console">
 
           </div>
-         <!-- <div id="lastSync"></div>
+         <div id="lastSync"></div>
           <button id="hardresetBtn">HARD reset</button>
-          <button id="resetBtn">reset</button>  <button id="reloadBtn">reload</button>-->
+          <button id="resetBtn">reset</button>  <button id="reloadBtn">reload</button>
           <button class="simpleBtn uploadBtn">SUBIR RESULTADOS</button>
         </td>
       </tr>
@@ -45,8 +45,8 @@
 <script type="text/javascript" src="js/jquery.min.js"></script>
 <script type="text/javascript" src="js/index.min.js"></script>
 <script type="text/javascript">
-  var urlService='http://187.216.52.244:8080/encuestas/public_html/';
- //var urlService='http://192.168.15.5/encuestas.altolago/public_html/';
+  //var urlService='http://187.216.52.244:8080/encuestas/public_html/';
+ var urlService='http://192.168.15.5/encuestas.altolago/public_html/';
  var date;
  var db = openDatabase('mydb', '1.0', 'ALTOLAGO DB', 2 * 1024 * 1024);
  $(function(){
@@ -61,12 +61,16 @@
   document.addEventListener('deviceready', onDeviceReady, false);
   $('#resetBtn').on('click',function(){
     localStorage.removeItem("syncDate");
+    localStorage.removeItem("results");
+    localStorage.removeItem("aplicationid");
     location.reload();
   });
   $('#hardresetBtn').on('click',function(){
     localStorage.removeItem("syncDate");
     localStorage.removeItem("deviceID");
     localStorage.removeItem("deviceName");
+    localStorage.removeItem("results");
+    localStorage.removeItem("aplicationid");
     location.reload();
   });
   $('#reloadBtn').on('click',function(){
