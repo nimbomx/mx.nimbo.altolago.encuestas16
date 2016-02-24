@@ -11,11 +11,12 @@
 	<title>Hello World</title>
 </head>
 <body >
-	<div style="position:fixed; top:10px; right:10px; display: none; z-index:999999;" id="debugConsole">
-		<div  id="slideCounter">#</div>
-		<div  id="idApply"></div>
-		<div  id="resultMonitor"></div>
-	</div>
+<div style="position:fixed; top:10px; right:10px; display: none; z-index:999999;" id="debugConsole">
+	<div  id="slideCounter">#</div>
+	<div  id="idApply"></div>
+	<div  id="resultMonitor"></div>
+</div>
+	
 	<div id="app">
 		<div class="page start"  data-page="0">
 			<table>
@@ -38,18 +39,19 @@
 <script type="text/javascript" src="js/index.min.js"></script>
 <script type="text/javascript">
 	//var urlService='http://187.216.52.244:8080/encuestas/public_html/';
-	//var urlService='http://192.168.15.5/encuestas.altolago/sistema/';
-	var urlService='https://www.altolago.com.mx/encuestas/sistema/';
-	
+	var urlService='http://192.168.15.5/encuestas.altolago/sistema/';
+
+
 	if (localStorage.getItem("debug") == "encendido") {
-		$('#debugConsole').show();
-	}
+      $('#debugConsole').show();
+    }
+
 
 	if (localStorage.getItem("aplicationid") === null) {
 		localStorage.setItem("aplicationid",-1);
 	}
+	var resultsB = [];
 	var results = [];
-	var idApply = [];
 	var date;
 	var idSurvey;
 	var sPages=0;
@@ -162,34 +164,42 @@
 					$('#app').append('<div class="page right" data-page="'+(i+1)+'"><table>'+out+'</table></div>');
 				}
 			});
-		});
+});
 
 
 
 
-	}
+}
 
-	function addResult(q,r){
-		results[idSurvey][localStorage["aplicationid"]][q]=r;
-		localStorage["results"] = JSON.stringify(results);
-		var storedResults = JSON.parse(localStorage["results"]);
+function addResult(q,r){
+	//alert(idSurvey.toString());
+	//resultsB[idSurvey+''][localStorage["aplicationid"]+''][q+'']=r;
+	//alert(resultsB)
+	//alert(JSON.stringify(resultsB))
+	results[idSurvey][localStorage["aplicationid"]][q]=r;
 
-	}
-	function updateOneSurvey(){
-//	alert('0uoS');
-var storedResults = JSON.parse(localStorage["results"]);
-if(storedResults.length==0)return false;
-rlen=storedResults.length;
-currentSurv=storedResults.pop();
-updateOneApply(currentSurv,storedResults,rlen);
+	localStorage["results"] = JSON.stringify(results);
+	var storedResults = JSON.parse(localStorage["results"]);
+	alert(storedResults)
+	//resultsB[idSurvey+'']='test';
+	//$('#resultMonitor').html('s');
+	//$('#resultMonitor').html(resultsB[idSurvey+''][localStorage["aplicationid"]+''][q+'']);
+}
+function updateOneSurvey(){
+	
+	var storedResults = JSON.parse(localStorage["results"]);
+	if(storedResults.length==0)return false;
+	rlen=storedResults.length;
+	currentSurv=storedResults.pop();
+	updateOneApply(currentSurv,storedResults,rlen);
 }
 function updateOneApply(surv,results,rlen){
 	if(surv!=null){
 		var storedResults = JSON.parse(localStorage["results"]);
-		//alert(JSON.stringify(surv));
-		//alert(JSON.stringify(storedResults));
-		//alert(rlen);
-		//alert(JSON.stringify(storedResults[rlen-1]));
+		/*alert(JSON.stringify(surv));
+		alert(JSON.stringify(storedResults));
+		alert(rlen);
+		alert(JSON.stringify(storedResults[rlen-1]));*/
 		alen=surv.length;
 		if(alen<=0){
 			//alert('noalen')
@@ -220,7 +230,7 @@ function updateOneResult(apply,surv,rlen,alen){
 			//alert('noqlen')
 			storedResults[rlen-1]=surv;
 			localStorage["results"] = JSON.stringify(storedResults);
-			updateOneSurvey();
+		updateOneSurvey();
 		}else{
 			currentQ=apply.pop();
 			//alert('siqlen');
@@ -235,7 +245,6 @@ function updateOneResult(apply,surv,rlen,alen){
 	}
 }
 function updateOne(question,apply,surv,rlen,alen,qlen){
-
 	var storedResults = JSON.parse(localStorage["results"]);
 	//alert('Question ::: '+(qlen-1));
 	if(question!=null){
@@ -243,20 +252,19 @@ function updateOne(question,apply,surv,rlen,alen,qlen){
 		alert('device ::: '+localStorage.getItem("deviceName"));
 		alert('answer ::: '+question);
 		alert('question :::'+(qlen-1));*/
-		//alert(""+question)
+		alert('question :::'+(qlen-1));
 		$.post(urlService+"updateresult2",{
 			id_survey:(rlen-1),
 			id_device:localStorage.getItem("deviceID"),
-			apply:idApply[(rlen-1)][(alen-1)],
+			apply:alen,
 			device:localStorage.getItem("deviceName"),
 			question:""+(qlen-1),
 			answer:""+question
 		},function(e){
-			//alert(e);
 			storedResults[rlen-1][alen-1]=apply;
 			localStorage["results"] = JSON.stringify(storedResults);
 			updateOneSurvey();
-		},'json');
+			},'json');
 	}else{
 		storedResults[rlen-1][alen-1]=apply;
 		localStorage["results"] = JSON.stringify(storedResults);
@@ -311,13 +319,13 @@ function updateOneResultb(){
 		}
 	});*/
 
-	localStorage["results"] = JSON.stringify(storedResults);
+localStorage["results"] = JSON.stringify(storedResults);
 
-	if(storedResults.length>0){
-		updateOneResult();
-	}else{
-		localStorage.setItem("aplicationid",-1);
-	}
+if(storedResults.length>0){
+	updateOneResult();
+}else{
+	localStorage.setItem("aplicationid",-1);
+}
 }else{
 	localStorage["results"] = JSON.stringify(storedResults);
 	if(storedResults.length>0){
@@ -331,37 +339,34 @@ function updateOneResultb(){
 }
 function updateResultsNow(){
 //alert(JSON.stringify(results));
-if(navigator.connection.type=='wifi'){
-	updateOneSurvey();
-}
-
+	if(navigator.connection.type=='wifi'){
+		updateOneSurvey();
+	}
+	
 }
 function startSurvey(){
-	//localStorage.setItem("aplicationid",0);
+	localStorage.setItem("aplicationid",Number(localStorage.getItem("aplicationid"))+1);
 	var d = new Date();
 	var n = d.getTime();
-
-	localStorage.setItem("aplicationid",Number(localStorage.getItem("aplicationid"))+1);
-	//alert(localStorage["aplicationid"]);
+	localStorage.setItem("id_apply",n);
+	
+	$('#idApply').html(localStorage.getItem("id_apply"));
 	if(localStorage["results"]){
 		results = JSON.parse(localStorage["results"]);
 	}else{
 		results=[];
 		results[idSurvey]=[];
+		resultsB=[];
+		resultsB[idSurvey+'']=[];
 	}
-	if(localStorage["idApply"]){
-		idApply = JSON.parse(localStorage["idApply"]);
-	}else{
-		idApply=[];
-		idApply[idSurvey]=[];
+	if(!results[idSurvey]){
+		results[idSurvey]=[];
 	}
-
-	if(!results[idSurvey])results[idSurvey]=[];
-	if(!idApply[idSurvey])idApply[idSurvey]=[];
+	if(!resultsB[idSurvey+'']){
+		resultsB[idSurvey+'']=[];
+	}
 	results[idSurvey][localStorage["aplicationid"]]=[];
-	$('#idApply').html(n);
-	idApply[idSurvey][localStorage["aplicationid"]]=n;
-	localStorage["idApply"] = JSON.stringify(idApply);
+	resultsB[idSurvey+''][localStorage["aplicationid"]+'']=[];
 	nextPage();
 }
 
@@ -375,6 +380,9 @@ function nextPage(){
 		updateResultsNow();
 
 	$('#slideCounter').text(currentPage);
+	/*localStorage["results"] = JSON.stringify(results);
+	var storedResults = JSON.parse(localStorage["results"]);*/
+	//$('#resultMonitor').html(JSON.stringify(results));
 }
 
 function prevPage(){

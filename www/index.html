@@ -13,6 +13,23 @@
 <body>
  <div id="app">
   <div class="page splash">
+    <img class="btnMenu" src="img/list-menu.png">
+    <div class="menu">
+      <img class="closeBtnMenu" src="img/cross.png">
+      <br><br>
+      <div id="nameDevice"></div>
+      <br>
+      Ultima actualización:
+      <div id="lastSync"></div>
+      <br>
+      <!--<button id="hardresetBtn">HARD reset</button>
+      <button id="resetBtn">reset</button>  -->
+      <button id="reloadBtn" class="btnstandard">RECARGAR</button>
+      <br><br><br><br><br>
+      <button id="debugBtn" class="btnstandard">DEBUG</button>
+      <div id="debugStatus"></div>
+    </div>
+    <div class="fog"></div>
     <table>
       <tr>
         <td>
@@ -26,9 +43,7 @@
           <div id="console">
 
           </div>
-         <!--<div id="lastSync"></div>
-          <button id="hardresetBtn">HARD reset</button>
-          <button id="resetBtn">reset</button>  <button id="reloadBtn">reload</button>-->
+
           <button class="simpleBtn uploadBtn">SUBIR RESULTADOS</button>
         </td>
       </tr>
@@ -45,74 +60,109 @@
 <script type="text/javascript" src="js/jquery.min.js"></script>
 <script type="text/javascript" src="js/index.min.js"></script>
 <script type="text/javascript">
-  var urlService='http://187.216.52.244:8080/encuestas/public_html/';
- //var urlService='http://192.168.15.5/encuestas.altolago/public_html/';
- var date;
- var db = openDatabase('mydb', '1.0', 'ALTOLAGO DB', 2 * 1024 * 1024);
- $(function(){
+  //var urlService='http://187.216.52.244:8080/encuestas/public_html/';
+  //var urlService='http://192.168.15.5/encuestas.altolago/sistema/';
+  var urlService='https://www.altolago.com.mx/encuestas/sistema/';
+  var date;
+  var db = openDatabase('mydb', '1.0', 'ALTOLAGO DB', 2 * 1024 * 1024);
+  $(function(){
 
+    function closeMenu(){
+      $('.fog').fadeOut();
+      $('.menu').css('right','-50%');
+    }
+    $('.btnMenu').on('click',function(){
+      $('.fog').fadeIn();
+      $('.menu').css('right','0%');
+    });
+    $('.fog').on('click',function(){
+      closeMenu();
+    });
+    $('.closeBtnMenu').on('click',function(){
+      closeMenu();
+    });
 
-  if (localStorage.getItem("syncDate") === null) {
-    date="2015-10-10 00:00:00";
-  }else{
-    date=localStorage.getItem("syncDate")
-  }
-  $('#lastSync').text(date);
-  document.addEventListener('deviceready', onDeviceReady, false);
-  $('#resetBtn').on('click',function(){
-    localStorage.removeItem("syncDate");
-    localStorage.removeItem("results");
-    localStorage.removeItem("aplicationid");
-    location.reload();
-  });
-  $('#hardresetBtn').on('click',function(){
-    localStorage.removeItem("syncDate");
-    localStorage.removeItem("deviceID");
-    localStorage.removeItem("deviceName");
-    localStorage.removeItem("results");
-    localStorage.removeItem("aplicationid");
-    location.reload();
-  });
-  $('#reloadBtn').on('click',function(){
-    location.reload();
-  });
-})
- function onDeviceReady(){
-  function onPrompt(results) {
-    if(results.input1.trim()!=""){
-      localStorage.setItem("deviceName",results.input1);
+    $('#debugBtn').on('click',function(){
+      if (localStorage.getItem("debug") != "encendido") {
+        localStorage.setItem("debug","encendido");
 
-      $.post(urlService+"register",{
-        name:results.input1,
-        model:device.model,
-        plataform:device.platform,
-        uuid:device.uuid,
-        version:device.version
-      },function(e){
-        localStorage.setItem("deviceID",e);
-        location.reload();
-      });
-    }else{
-      registerDevice();
+      }else{
+        localStorage.removeItem("debug");
+
+      }
+      $('#debugStatus').html(localStorage.getItem("debug"));
+    })
+
+    if (localStorage.getItem("debug") != "encendido") {
+      localStorage.removeItem("debug");
     }
     
-  }
-  function registerDevice(){
-    navigator.notification.prompt(
+    if (localStorage.getItem("syncDate") === null) {
+      date="2015-10-10 00:00:00";
+    }else{
+      date=localStorage.getItem("syncDate")
+    }
+    $('#lastSync').text(date);
+    document.addEventListener('deviceready', onDeviceReady, false);
+    $('#resetBtn').on('click',function(){
+      localStorage.removeItem("syncDate");
+      localStorage.removeItem("results");
+      localStorage.removeItem("aplicationid");
+      location.reload();
+    });
+    $('#hardresetBtn').on('click',function(){
+      localStorage.removeItem("syncDate");
+      localStorage.removeItem("deviceID");
+      localStorage.removeItem("deviceName");
+      localStorage.removeItem("results");
+      localStorage.removeItem("aplicationid");
+      location.reload();
+    });
+    $('#reloadBtn').on('click',function(){
+      location.reload();
+    });
+  })
+  function onDeviceReady(){
+    function onPrompt(results) {
+      if(results.input1.trim()!=""){
+        localStorage.setItem("deviceName",results.input1);
+
+        $.post(urlService+"register",{
+          name:results.input1,
+          model:device.model,
+          plataform:device.platform,
+          uuid:device.uuid,
+          version:device.version
+        },function(e){
+          localStorage.setItem("deviceID",e);
+          location.reload();
+        });
+      }else{
+        registerDevice();
+      }
+
+    }
+    function registerDevice(){
+      navigator.notification.prompt(
         'Agrega un nombre al dispositivo',  // message
         onPrompt,                  // callback to invoke
         'Registro de dispositivo',            // title
         ['Registrar']               // defaultText
         );
-  }
-  if (localStorage.getItem("deviceID") === null) {
+    }
+    if (localStorage.getItem("deviceID") === null) {
 
-    registerDevice();
-  }
-  $.post(urlService+"syncsurveys",{date:date},function(e){
-    if(e.synced=='false'){
+      registerDevice();
+    }else{
+      $('#nameDevice').html('ID: '+localStorage.getItem("deviceID"));
+      $('#nameDevice').append('<br>Nombre: '+localStorage.getItem("deviceName"));
+    }
+    $('#debugStatus').html(localStorage.getItem("debug"));
 
-      localStorage.setItem("syncDate",e.sync.synced_at);
+    $.post(urlService+"syncsurveys",{date:date},function(e){
+      if(e.synced=='false'){
+
+        localStorage.setItem("syncDate",e.sync.synced_at);
                    // navigator.notification.alert(e.surveys);
                    db.transaction(function (tx) {  
                     tx.executeSql('DROP TABLE if exists Surveys');
@@ -150,17 +200,17 @@
 
                // navigator.notification.alert(e.survey_structure);
              },'json');
-}
+  }
 
-function animateTxtBtn(){
-  $('.txtBtn').delay(500).each(function(i) {
-    $(this).addClass("undone").delay(200*i).queue(function(){
-      $(this).addClass("show").dequeue().delay(1000).queue(function(){
-        $(this).addClass("done").dequeue();
+  function animateTxtBtn(){
+    $('.txtBtn').delay(500).each(function(i) {
+      $(this).addClass("undone").delay(200*i).queue(function(){
+        $(this).addClass("show").dequeue().delay(1000).queue(function(){
+          $(this).addClass("done").dequeue();
+        });
       });
     });
-  });
-}
+  }
 </script>
 </body>
 </html>
