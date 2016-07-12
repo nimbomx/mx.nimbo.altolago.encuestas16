@@ -65,9 +65,14 @@
 		function onConfirm(buttonIndex){
 			if(buttonIndex==2){
 				var results = JSON.parse(localStorage["results"]);
-				results[localStorage["aplicationid"]]=null;
-				localStorage["results"] = JSON.stringify(results);
+				if (results){
+					results[localStorage["aplicationid"]]=null;
+					localStorage["results"] = JSON.stringify(results);
+				}
+				
+				currentPage=1;
 				prevPage();
+				//history.back();
 			}
 		}
 		function onConfirm2(buttonIndex){

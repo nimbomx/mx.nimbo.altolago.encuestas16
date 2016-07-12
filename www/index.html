@@ -10,11 +10,18 @@
   <link rel="stylesheet" type="text/css" href="css/app.css" />
   <title>Hello World</title>
   <script type="text/javascript">
+
+    function checkConnection() {
+      return navigator.connection.type=='wifi';
+
+
+    }
+
   //var urlService='http://187.216.52.244:8080/encuestas/public_html/';
   //var urlService='http://192.168.15.5/encuestas.altolago/sistema/';
   //var urlService='https://www.altolago.com.mx/encuestas/sistema/';
   var urlService='http://altolago.nimbo.pro/';
-  </script>
+</script>
 </head>
 <body>
  <div id="app">
@@ -29,38 +36,38 @@
       <div id="lastSync"></div>
       <br>
       <!--<button id="hardresetBtn">HARD reset</button>
-        -->
-      <button id="reloadBtn" class="btnstandard">RECARGAR</button>
-      <br><br><br><br><br>
-      <button id="debugBtn" class="btnstandard">DEBUG</button>
-      <div id="debugStatus"></div>
-      <br><br>
-      <button style="display:none;" id="resetBtn">reset</button><br>
-      <br><br><br>
-      <a onclick="window.open(urlService, '_system');">Ir al Sitio</a>
-      
-    </div>
-    <div class="fog"></div>
-    <table>
-      <tr>
-        <td>
-          <img src="img/LogoAltoLagoBig.png"><br><br>
-          <div class="status"></div>
-          <button class="simpleBtn registrarBtn">REGISTRAR</button>
-          <button class="simpleBtn resetBtn">RESTAURAR</button>
-          <button class="simpleBtn reloadBtn">REINTENTAR</button>
-          <br><br>
-          <div id="encuestas"></div>
-          <div id="console">
+    -->
+    <button id="reloadBtn" class="btnstandard">RECARGAR</button>
+    <br><br><br><br><br>
+    <button id="debugBtn" class="btnstandard">DEBUG</button>
+    <div id="debugStatus"></div>
+    <br><br>
+    <button style="display:none;" id="resetBtn">reset</button><br>
+    <br><br><br>
+    <a onclick="window.open(urlService, '_system');">Ir al Sitio</a>
 
-          </div>
-
-          <button class="simpleBtn uploadBtn">SUBIR RESULTADOS</button>
-        </td>
-      </tr>
-    </table>
-    <button id="syncBtnmmm" style="display:none;">SYNC</button>
   </div>
+  <div class="fog"></div>
+  <table>
+    <tr>
+      <td>
+        <img src="img/LogoAltoLagoBig.png"><br><br>
+        <div class="status"></div>
+        <button class="simpleBtn registrarBtn">REGISTRAR</button>
+        <button class="simpleBtn resetBtn">RESTAURAR</button>
+        <button class="simpleBtn reloadBtn">REINTENTAR</button>
+        <br><br>
+        <div id="encuestas"></div>
+        <div id="console">
+
+        </div>
+
+        <button class="simpleBtn uploadBtn">SUBIR RESULTADOS</button>
+      </td>
+    </tr>
+  </table>
+  <button id="syncBtnmmm" style="display:none;">SYNC</button>
+</div>
 
 </div>
 
@@ -170,51 +177,67 @@
     }
     $('#debugStatus').html(localStorage.getItem("debug"));
 
-    $.post(urlService+"syncsurveys",{date:date},function(e){
+    if(checkConnection()){
 
-      if(e.synced=='false'){
+      $.post(urlService+"syncsurveys",{date:date},function(e){
+
+        if(e.synced=='false'){
         //alert(e.sync.synced_at)
         localStorage.setItem("syncDate",e.sync.synced_at);
                     //navigator.notification.alert(e.surveys);
-                   db.transaction(function (tx) {  
-                    tx.executeSql('DROP TABLE if exists Surveys');
-                    tx.executeSql('CREATE TABLE IF NOT EXISTS Surveys (id unique, name, description,active)');
-                  });
-                   db.transaction(function (tx) {  
-                    for(n in e.surveys){
-                      
-                      tx.executeSql('INSERT INTO Surveys (id, name,description,active) VALUES (?,?,?,?)',[e.surveys[n].id,e.surveys[n].name,e.surveys[n].description,e.surveys[n].active]);
-                    }
-                  });
-                   db.transaction(function (tx) { 
-                    tx.executeSql('DROP TABLE if exists Structure');
-                    tx.executeSql('CREATE TABLE IF NOT EXISTS Structure (id unique, id_survey,id_kind,val)');
-                  });
-                   db.transaction(function (tx) {  
-                    for(m in e.survey_structure){
-                      tx.executeSql('INSERT INTO Structure (id, id_survey,id_kind,val) VALUES (?,?,?,?)',[e.survey_structure[m].id,e.survey_structure[m].id_survey,e.survey_structure[m].id_kind,e.survey_structure[m].values]);
+                    db.transaction(function (tx) {  
+                      tx.executeSql('DROP TABLE if exists Surveys');
+                      tx.executeSql('CREATE TABLE IF NOT EXISTS Surveys (id unique, name, description,active)');
+                    });
+                    db.transaction(function (tx) {  
+                      for(n in e.surveys){
 
-                    }
+                        tx.executeSql('INSERT INTO Surveys (id, name,description,active) VALUES (?,?,?,?)',[e.surveys[n].id,e.surveys[n].name,e.surveys[n].description,e.surveys[n].active]);
+                      }
+                    });
+                    db.transaction(function (tx) { 
+                      tx.executeSql('DROP TABLE if exists Structure');
+                      tx.executeSql('CREATE TABLE IF NOT EXISTS Structure (id unique, id_survey,id_kind,val)');
+                    });
+                    db.transaction(function (tx) {  
+                      for(m in e.survey_structure){
+                        tx.executeSql('INSERT INTO Structure (id, id_survey,id_kind,val) VALUES (?,?,?,?)',[e.survey_structure[m].id,e.survey_structure[m].id_survey,e.survey_structure[m].id_kind,e.survey_structure[m].values]);
+
+                      }
+                    });
+
+
+
+                  }
+                  db.transaction(function (tx) {
+                    tx.executeSql('SELECT * FROM Surveys WHERE active=1', [], function (tx, results) {
+                     var len = results.rows.length, i;
+
+                     $('#encuestas').html('');
+                     for (i = 0; i < len; i++){
+                       $('#encuestas').append('<a href="encuesta.html#'+results.rows.item(i).id+'"><button class="txtBtn"><div class="shadow"></div><div class="active"><table><tr><td>'+results.rows.item(i).name+'</td></tr></table></div></button></a>');
+
+                     }
+                     animateTxtBtn();
+                   });
                   });
-
-
-
-                 }
-                 db.transaction(function (tx) {
-                  tx.executeSql('SELECT * FROM Surveys WHERE active=1', [], function (tx, results) {
-                   var len = results.rows.length, i;
-                   
-                   $('#encuestas').html('');
-                   for (i = 0; i < len; i++){
-                     $('#encuestas').append('<a href="encuesta.html#'+results.rows.item(i).id+'"><button class="txtBtn"><div class="shadow"></div><div class="active"><table><tr><td>'+results.rows.item(i).name+'</td></tr></table></div></button></a>');
-                     
-                   }
-                   animateTxtBtn();
-                 });
-                });
 
                // navigator.notification.alert(e.survey_structure);
              },'json');
+    }else{
+      db.transaction(function (tx) {
+        tx.executeSql('SELECT * FROM Surveys WHERE active=1', [], function (tx, results) {
+         var len = results.rows.length, i;
+
+         $('#encuestas').html('');
+         for (i = 0; i < len; i++){
+           $('#encuestas').append('<a href="encuesta.html#'+results.rows.item(i).id+'"><button class="txtBtn"><div class="shadow"></div><div class="active"><table><tr><td>'+results.rows.item(i).name+'</td></tr></table></div></button></a>');
+
+         }
+         animateTxtBtn();
+       });
+      });
+    }
   }
 
   function animateTxtBtn(){
