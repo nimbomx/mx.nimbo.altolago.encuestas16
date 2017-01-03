@@ -34,7 +34,7 @@
       <br>
       Ultima actualización:
       <div id="lastSync"></div>
-      <br>
+      <br>.
       <!--<button id="hardresetBtn">HARD reset</button>
     -->
     <button id="reloadBtn" class="btnstandard">RECARGAR</button>
@@ -228,7 +228,7 @@
                // navigator.notification.alert(e.survey_structure);
              },'json');
     }else{
-      alert('unconnected')
+     // alert('unconnected')
       db.transaction(function (tx) {
         tx.executeSql("SELECT * FROM Surveys  WHERE active='1'", [], function (tx, results) {
          var len = results.rows.length, i;
