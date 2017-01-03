@@ -2,7 +2,7 @@
 <widget xmlns="http://www.w3.org/ns/widgets" 
   xmlns:gap="http://phonegap.com/ns/1.0" 
   id="mx.nimbo.altolago.encuestas16" 
-  version="1.1.0">
+  version="1.2.0">
   <name>Alto Lago - Escuestas</name>
   <description>Sistema de encuestas Alto Lago.</description>
   <author href="http://nimbo.mx" email="ernesto@nimbo.mx">Nimbo Systems</author>
@@ -43,6 +43,7 @@
     <plugin name="cordova-plugin-statusbar"           source="npm" spec="~2.1.2" />
     <plugin name="cordova-plugin-vibration"           source="npm" spec="~2.1.0" />
     <plugin name="cordova-plugin-whitelist"           source="npm" spec="~1.2.1" />
+
   <icon src="www/icon.png"/>
   <gap:splash src="www/res/screen/android/screen-ldpi-portrait.png" gap:platform="android" gap:qualifier="port-ldpi"/>
   <gap:splash src="www/res/screen/android/screen-mdpi-portrait.png" gap:platform="android" gap:qualifier="port-mdpi"/>
