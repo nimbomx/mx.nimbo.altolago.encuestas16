@@ -213,7 +213,7 @@
 
                   }
                   db.transaction(function (tx) {
-                    tx.executeSql("SELECT * FROM Surveys WHERE active='1'", [], function (tx, results) {
+                    tx.executeSql("SELECT * FROM Surveys ", [], function (tx, results) {
                      var len = results.rows.length, i;
 
                      $('#encuestas').html('');
@@ -230,7 +230,7 @@
     }else{
      // alert('unconnected')
       db.transaction(function (tx) {
-        tx.executeSql("SELECT * FROM Surveys  WHERE active='1'", [], function (tx, results) {
+        tx.executeSql("SELECT * FROM Surveys ", [], function (tx, results) {
          var len = results.rows.length, i;
 
          $('#encuestas').html('');
