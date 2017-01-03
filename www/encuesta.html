@@ -110,7 +110,7 @@
 		idSurvey=id.replace('#','');
 
 		db.transaction(function (tx) {
-			tx.executeSql('SELECT * FROM Structure WHERE id_survey='+idSurvey, [], function (tx, results) {
+			tx.executeSql("SELECT * FROM Structure WHERE id_survey=?", [idSurvey], function (tx, results) {
 				var len = results.rows.length, i;
 				totalPages=len;
 				for (i = 0; i < len; i++){
