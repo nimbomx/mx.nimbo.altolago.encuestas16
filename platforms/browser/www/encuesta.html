@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="format-detection" content="telephone=no" />
+	<meta name="msapplication-tap-highlight" content="no" />
+	<!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+	<link rel="stylesheet" type="text/css" href="css/app.css" />
+	<title>Hello World</title>
+</head>
+<body >
+	<div style="position:fixed; top:10px; right:10px; display: none; z-index:999999;" id="debugConsole">
+		<div  id="slideCounter">#</div>
+		<div  id="idApply"></div>
+		<div  id="resultMonitor"></div>
+	</div>
+	<div id="app">
+		<div class="page start"  data-page="0">
+			<table>
+				<tr>
+					<td>
+						<img src="img/LogoAltoLagoBig.png"><br><br>
+
+						<button class="simpleBtn startBtn">COMENZAR</button>
+
+					</div>
+				</td>
+			</tr>
+		</table>
+
+	</div>
+</div>
+
+<script type="text/javascript" src="cordova.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/index.min.js"></script>
+<script type="text/javascript">
+	//var urlService='http://187.216.52.244:8080/encuestas/public_html/';
+	//var urlService='http://192.168.15.5/encuestas.altolago/sistema/';
+	//var urlService='https://www.altolago.com.mx/encuestas/sistema/';
+	var urlService='http://altolago.nimbo.pro/';
+	
+	if (localStorage.getItem("debug") == "encendido") {
+		$('#debugConsole').show();
+	}
+
+	if (localStorage.getItem("aplicationid") === null) {
+		localStorage.setItem("aplicationid",-1);
+	}
+	var results = [];
+	var idApply = [];
+	var date;
+	var idSurvey;
+	var sPages=0;
+	var currentPage=0;
+	var totalPages=0;
+	var db = openDatabase('mydb', '1.0', 'ALTOLAGO DB', 2 * 1024 * 1024);
+
+	document.addEventListener('deviceready', onDeviceReady, false);
+
+	function setBackBtn(){
+		document.addEventListener("backbutton", onBackKeyDown, false);
+		function onConfirm(buttonIndex){
+			if(buttonIndex==2){
+				var results = JSON.parse(localStorage["results"]);
+				if (results){
+					results[localStorage["aplicationid"]]=null;
+					localStorage["results"] = JSON.stringify(results);
+				}
+				
+				currentPage=1;
+				prevPage();
+				//history.back();
+			}
+		}
+		function onConfirm2(buttonIndex){
+			if(buttonIndex==2)
+				history.back();
+		}
+		function onBackKeyDown() {
+			if(currentPage==1){
+				navigator.notification.confirm(
+					'Se perderán los avances', 
+					onConfirm, 
+					'Reiniciar encuesta', 
+					'Cancelar,Reiniciar encuesta');
+
+			}else if(currentPage>1){
+				if(currentPage==totalPages){
+					history.back();
+				}else{
+					prevPage();
+				}
+			}else{
+				navigator.notification.confirm(
+					'¿Desea regresar al menú principal?', 
+					onConfirm2, 
+					'Menú Principal', 
+					'Cancelar,Ir al menu principal');
+			}
+			
+
+		}
+	}
+	function onDeviceReady(){
+		setBackBtn();
+		id=location.hash
+		idSurvey=id.replace('#','');
+
+		db.transaction(function (tx) {
+			tx.executeSql('SELECT * FROM Structure WHERE id_survey='+idSurvey, [], function (tx, results) {
+				var len = results.rows.length, i;
+				totalPages=len;
+				for (i = 0; i < len; i++){
+					var myjsonobject=(results.rows.item(i).val);
+					var obj = jQuery.parseJSON(myjsonobject.replace(/\n/g,"\\n"));
+					var kind=results.rows.item(i).id_kind;
+					var idq=results.rows.item(i).id;
+					var out='';
+					var tmp='...';
+					if(kind == 1){
+						out+='<tr><td><div id="logoSml"><img src="images/LogoAltoLagoBig.png"></div></td></tr>';
+						out+='<tr><td><div class="wBlack">'+obj.Principal+'</div><br><div class="wBold">'+obj.Secundario+'</div></td></tr>';
+						out+='<tr><td><button class="simpleBtn nextBtn">PROSIGA</button></td></tr>';
+					}
+					if(kind ==2){
+						out+='<tr><td><div id="logoSml"><img src="images/LogoAltoLagoBig.png"></div></td></tr>';
+						out+='<tr><td><div class="wBlack">'+obj.Pregunta+'</div></td></tr>';
+						out+='<tr><td><div class="opciones">';
+						out+='<button class="emoBtn emo1 r1" data-q="'+idq+'"><div class="shadow"></div><div class="active"></div></button>';
+						out+='<button class="emoBtn emo2 r2" data-q="'+idq+'"><div class="shadow"></div><div class="active"></div></button>';
+						out+='<button class="emoBtn emo3 r3" data-q="'+idq+'"><div class="shadow"></div><div class="active"></div></button>';
+						out+='<button class="emoBtn emo4 r4" data-q="'+idq+'"><div class="shadow"></div><div class="active"></div></button>';
+						out+='</div></td></tr>';
+					}
+					if(kind ==3){
+						out+='<tr><td><div id="logoSml"><img src="images/LogoAltoLagoBig.png"></div></td></tr>';
+						out+='<tr><td><div class="wBlack">'+obj.Pregunta+'</div></td></tr>';
+						out+='<tr><td><div class="opciones">';
+						out+='<button class="txtBtn r1" data-q="'+idq+'"><div class="shadow"></div><div class="active"><table><tr><td>'+obj.r1+'</td></tr></table></div></button>';
+						out+='<button class="txtBtn r2" data-q="'+idq+'"><div class="shadow"></div><div class="active"><table><tr><td>'+obj.r2+'</td></tr></table></div></button>';
+						out+='<button class="txtBtn r3" data-q="'+idq+'"><div class="shadow"></div><div class="active"><table><tr><td>'+obj.r3+'</td></tr></table></div></button>';
+						out+='<button class="txtBtn r4" data-q="'+idq+'"><div class="shadow"></div><div class="active"><table><tr><td>'+obj.r4+'</td></tr></table></div></button>';
+						out+='</div></td></tr>';
+					}
+					if(kind==4){
+						out+='<tr><td><div class="logH" id="logoSml"><img src="images/LogoAltoLagoBig.png"></div></td></tr>';
+						out+='<tr><td><div class="wBlack">'+obj.Pregunta+'</div><div style="float:left; margin: 0px 40px;"><button class="simpleBtn prevBtn">REGRESAR</button></div><div style="float:right; margin: 0px 40px;"><button class="simpleBtn nextBtn oq " data-q="'+idq+'">SIGUENTE</button></div></td></tr>';
+						out+='<tr><td><div style="margin: 0px 40px;"><textarea class="openQ" style="width:90%; margin:auto; height:300px; background:#fff; border-radius:20px"></textarea><div class="grow"></div></div></td></tr>';
+					}
+					if(kind==5){
+						out+='<tr><td><div id="logoSml"><img src="images/LogoAltoLagoBig.png"></div></td></tr>';
+						out+='<tr><td><div class="wBlack">'+obj.Principal+'</div><br><div class="wBold">'+obj.Secundario+'</div></td></tr>';
+					}
+					if(kind==6){
+						out+='<tr><td><div id="logoSml"><img src="images/LogoAltoLagoBig.png"></div></td></tr>';
+						out+='<tr><td><div class="wBlack">'+obj.Pregunta+'</div></td></tr>';
+						out+='<tr><td><div class="opciones">';
+						var options=obj.Opciones.split(",");
+						for(x in options){
+							out+='<button class="txtBtnM" data-q="'+idq+'"><div class="shadow"></div><div class="active"><table><tr><td>'+options[x]+'</td></tr></table></div></button>';
+						}
+
+						out+='</div></td></tr>';
+					}
+					$('#app').append('<div class="page right" data-page="'+(i+1)+'"><table>'+out+'</table></div>');
+				}
+			});
+		});
+
+
+
+
+	}
+
+	function addResult(q,r){
+		results[idSurvey][localStorage["aplicationid"]][q]=r;
+		localStorage["results"] = JSON.stringify(results);
+		var storedResults = JSON.parse(localStorage["results"]);
+
+	}
+	function updateOneSurvey(){
+//	alert('0uoS');
+var storedResults = JSON.parse(localStorage["results"]);
+if(storedResults.length==0)return false;
+rlen=storedResults.length;
+currentSurv=storedResults.pop();
+updateOneApply(currentSurv,storedResults,rlen);
+}
+function updateOneApply(surv,results,rlen){
+	if(surv!=null){
+		var storedResults = JSON.parse(localStorage["results"]);
+		//alert(JSON.stringify(surv));
+		//alert(JSON.stringify(storedResults));
+		//alert(rlen);
+		//alert(JSON.stringify(storedResults[rlen-1]));
+		alen=surv.length;
+		if(alen<=0){
+			//alert('noalen')
+			localStorage["results"] = JSON.stringify(results);
+			updateOneSurvey();
+		}else{
+			currentApply=surv.pop();
+			updateOneResult(currentApply,surv,rlen,alen);
+		}
+		
+		
+
+	}else{
+		//alert('nosurv');
+		localStorage["results"] = JSON.stringify(results);
+		updateOneSurvey();
+	}
+}
+function updateOneResult(apply,surv,rlen,alen){
+	var storedResults = JSON.parse(localStorage["results"]);
+	//alert('Encuesta :: '+rlen);
+
+	if(apply!=null){
+		qlen=apply.length;
+		//alert('qlen:'+qlen);
+		
+		if(qlen<=0){
+			//alert('noqlen')
+			storedResults[rlen-1]=surv;
+			localStorage["results"] = JSON.stringify(storedResults);
+			updateOneSurvey();
+		}else{
+			currentQ=apply.pop();
+			//alert('siqlen');
+			updateOne(currentQ,apply,surv,rlen,alen,qlen);
+		}
+		
+
+	}else{
+		storedResults[rlen-1]=surv;
+		localStorage["results"] = JSON.stringify(storedResults);
+		updateOneSurvey();
+	}
+}
+function updateOne(question,apply,surv,rlen,alen,qlen){
+
+	var storedResults = JSON.parse(localStorage["results"]);
+	//alert('Question ::: '+(qlen-1));
+	if(question!=null){
+		/*alert('id_device ::: '+localStorage.getItem("deviceID"));
+		alert('device ::: '+localStorage.getItem("deviceName"));
+		alert('answer ::: '+question);
+		alert('question :::'+(qlen-1));*/
+		//alert(""+question)
+		$.post(urlService+"updateresult2",{
+			id_survey:(rlen-1),
+			id_device:localStorage.getItem("deviceID"),
+			apply:idApply[(rlen-1)][(alen-1)],
+			device:localStorage.getItem("deviceName"),
+			question:""+(qlen-1),
+			answer:""+question
+		},function(e){
+			//alert(e);
+			storedResults[rlen-1][alen-1]=apply;
+			localStorage["results"] = JSON.stringify(storedResults);
+			updateOneSurvey();
+		},'json');
+	}else{
+		storedResults[rlen-1][alen-1]=apply;
+		localStorage["results"] = JSON.stringify(storedResults);
+		updateOneSurvey();
+	}
+	/*if(apply!=null){
+		alert('id_device :: '+localStorage.getItem("deviceID"));
+		alert('device :: '+localStorage.getItem("deviceName"));
+
+		qlen=apply.length;
+		currentQ=apply.pop();
+		updateOne(currentQ,apply,surv,rlen,alen,qlen);
+
+	}else{
+		storedResults[rlen-1]=surv;
+		localStorage["results"] = JSON.stringify(results);
+		updateOneSurvey();
+	}*/
+}
+
+function updateOneResultb(){
+	alert('upone');
+	//CREAMOS ARRAY
+	var storedResults = JSON.parse(localStorage["results"]);
+	alert(storedResults[idSurvey].length);
+	alert(JSON.stringify(storedResults));
+	currentSurv=storedResults.pop();
+	alert(JSON.stringify(currentSurv));
+	currentResult=currentSurv.pop();
+	if(currentResult!=null){
+		//INSERTAMOS EL RESULTADO
+		//alert(JSON.stringify(currentResult));
+		for(x in currentResult){
+			if(currentResult[x]!=null){
+				alert(x+':'+currentResult[x]);
+			}
+			
+		}
+		/*$.post(urlService+"updateresult",{
+			id_survey:r.id_survey,
+			id_device:localStorage.getItem("deviceID"),
+			performed_at:r.performed_at,
+			device:localStorage.getItem("deviceName"),
+			question:""+r.question,
+			answer:""+r.answer
+		},function(e){
+			localStorage["results"] = JSON.stringify(storedResults);
+			if(storedResults.length>0){
+			updateOneResult();
+		}else{
+			localStorage.setItem("aplicationid",-1);
+		}
+	});*/
+
+	localStorage["results"] = JSON.stringify(storedResults);
+
+	if(storedResults.length>0){
+		updateOneResult();
+	}else{
+		localStorage.setItem("aplicationid",-1);
+	}
+}else{
+	localStorage["results"] = JSON.stringify(storedResults);
+	if(storedResults.length>0){
+		updateOneResult();
+	}else{
+		localStorage.setItem("aplicationid",-1);
+	}
+}
+
+
+}
+function updateResultsNow(){
+//alert(JSON.stringify(results));
+if(navigator.connection.type=='wifi'){
+	updateOneSurvey();
+}
+
+}
+function startSurvey(){
+	//localStorage.setItem("aplicationid",0);
+	var d = new Date();
+	var n = d.getTime();
+
+	localStorage.setItem("aplicationid",Number(localStorage.getItem("aplicationid"))+1);
+	//alert(localStorage["aplicationid"]);
+	if(localStorage["results"]){
+		results = JSON.parse(localStorage["results"]);
+	}else{
+		results=[];
+		results[idSurvey]=[];
+	}
+	if(localStorage["idApply"]){
+		idApply = JSON.parse(localStorage["idApply"]);
+	}else{
+		idApply=[];
+		idApply[idSurvey]=[];
+	}
+
+	if(!results[idSurvey])results[idSurvey]=[];
+	if(!idApply[idSurvey])idApply[idSurvey]=[];
+	results[idSurvey][localStorage["aplicationid"]]=[];
+	$('#idApply').html(n);
+	idApply[idSurvey][localStorage["aplicationid"]]=n;
+	localStorage["idApply"] = JSON.stringify(idApply);
+	nextPage();
+}
+
+function nextPage(){
+	$('.page[data-page="'+currentPage+'"]').addClass('left');
+	currentPage++;
+	$('.page[data-page="'+currentPage+'"]').removeClass('right');
+	animateEmoBtn();
+	animateTxtBtn();
+	if(totalPages<=currentPage)
+		updateResultsNow();
+
+	$('#slideCounter').text(currentPage);
+}
+
+function prevPage(){
+	$('.page[data-page="'+currentPage+'"]').addClass('right');
+	currentPage--;
+	$('.page[data-page="'+currentPage+'"]').removeClass('left');
+	animateEmoBtn();
+	animateTxtBtn();
+	$('#slideCounter').text(currentPage);
+
+}
+
+$('.startBtn').on('click',function(){
+	startSurvey();
+});
+
+$('#app').on('click','.nextBtn',function(){
+	if($(this).hasClass('oq')){
+		q=$(this).data('q');
+		r=$(this).parents().eq(3).find('.openQ').val();		
+		addResult(q,r);
+	}
+	nextPage();
+})
+$('#app').on('click','.prevBtn',function(){
+	prevPage();
+});
+
+$('#app').on('click','.emoBtn,.txtBtn',function(){
+	q=$(this).data('q');
+	if($(this).hasClass('r1'))r=1;
+	if($(this).hasClass('r2'))r=2;
+	if($(this).hasClass('r3'))r=3;
+	if($(this).hasClass('r4'))r=4;
+	addResult(q,r);
+	nextPage();
+})
+$('#app').on('click','.txtBtnM',function(){
+	q=$(this).data('q');
+	r=$(this).text();
+	addResult(q,r);
+	nextPage();
+})
+
+function animateEmoBtn(){
+	$('.page[data-page="'+currentPage+'"] .emoBtn').delay(500).each(function(i) {
+		$(this).addClass("undone").delay(200*i).queue(function(){
+			$(this).addClass("bounce").dequeue().delay(1000).queue(function(){
+				$(this).addClass("done").dequeue();
+			});
+		});
+	});
+}
+
+function animateTxtBtn(){
+	$('.page[data-page="'+currentPage+'"] .txtBtn').delay(500).each(function(i) {
+		$(this).addClass("undone").delay(200*i).queue(function(){
+			$(this).addClass("show").dequeue().delay(1000).queue(function(){
+				$(this).addClass("done").dequeue();
+			});
+		});
+	});
+	$('.page[data-page="'+currentPage+'"] .txtBtnM').delay(500).each(function(i) {
+		$(this).addClass("undone").delay(200*i).queue(function(){
+			$(this).addClass("show").dequeue().delay(1000).queue(function(){
+				$(this).addClass("done").dequeue();
+			});
+		});
+	});
+
+}
+</script>
+</body>
+</html>
